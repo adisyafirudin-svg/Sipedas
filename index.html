@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIPEDAS - Sistem Pendataan Ekonomi & Rumah Siswa</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- Toast Notification Container (Pengganti alert) -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Navbar Utama -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+          <i class="fa-solid fa-house-user text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg tracking-tight text-slate-900 leading-none">SIPEDAS</h1>
+          <p class="text-xs text-slate-500 mt-0.5 hidden sm:block">Pendataan Ekonomi & Tempat Tinggal Siswa</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button onclick="openDeployModal()" class="text-xs sm:text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span class="hidden md:inline">Cara Upload Domain Gratis</span>
+          <span class="md:hidden">Deploy Gratis</span>
+        </button>
+
+        <!-- Info User Aktif & Tombol Keluar -->
+        <div id="nav-user-info" class="hidden items-center gap-2 pl-2 border-l border-slate-200">
+          <span id="nav-user-badge" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200"></span>
+          <button onclick="logout()" class="text-xs sm:text-sm font-medium text-rose-600 hover:bg-rose-50 px-3 py-2 rounded-xl transition flex items-center gap-1.5" title="Keluar / Ganti Akun">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span class="hidden sm:inline">Keluar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Konten Utama -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- ==================== 1. HALAMAN LOGIN / PILIH PERAN ==================== -->
+    <section id="view-login" class="max-w-md mx-auto mt-4 sm:mt-10">
+      <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-200 overflow-hidden">
+        <!-- Header Card -->
+        <div class="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 p-6 text-white text-center">
+          <div class="w-14 h-14 bg-white/10 backdrop-blur rounded-2xl flex items-center justify-center mx-auto mb-3 border border-white/20">
+            <i class="fa-solid fa-school text-2xl text-blue-300"></i>
+          </div>
+          <h2 class="text-xl font-bold">Selamat Datang di SIPEDAS</h2>
+          <p class="text-xs text-blue-200 mt-1">Pilih peran pengguna untuk melanjutkan ke sistem</p>
+        </div>
+
+        <!-- Tab Switcher Peran -->
+        <div class="grid grid-cols-2 p-1.5 bg-slate-100 m-5 rounded-xl border border-slate-200/80">
+          <button id="tab-btn-siswa" onclick="switchLoginTab('siswa')" class="py-2.5 text-sm font-semibold rounded-lg bg-white text-blue-700 shadow-sm transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-user-graduate"></i>
+            <span>1. Portal Siswa</span>
+          </button>
+          <button id="tab-btn-admin" onclick="switchLoginTab('admin')" class="py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>2. Login Admin</span>
+          </button>
+        </div>
+
+        <!-- Form Login Siswa -->
+        <form id="form-login-siswa" onsubmit="handleLoginSiswa(event)" class="px-6 pb-6 space-y-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">NISN Siswa</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                <i class="fa-solid fa-id-card"></i>
+              </span>
+              <input type="text" id="login-nisn" required placeholder="Contoh: 0081234567" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Nama Lengkap Siswa</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <input type="text" id="login-nama-siswa" required placeholder="Masukkan nama lengkap Anda" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md shadow-blue-600/20 transition flex items-center justify-center gap-2">
+            <span>Masuk ke Portal Siswa</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+
+          <div class="pt-2 border-t border-slate-100">
+            <p class="text-xs text-slate-500 text-center mb-2">Atau uji cepat menggunakan akun demo siswa:</p>
+            <button type="button" onclick="quickDemoSiswa()" class="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-xl transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-bolt text-amber-500"></i>
+              <span>Demo Siswa: Ahmad Fauzi (NISN: 0081122334)</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Form Login Admin -->
+        <form id="form-login-admin" onsubmit="handleLoginAdmin(event)" class="hidden px-6 pb-6 space-y-4">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Username Admin</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                <i class="fa-solid fa-user-tie"></i>
+              </span>
+              <input type="text" id="login-admin-user" required placeholder="Username" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">Password</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                <i class="fa-solid fa-lock"></i>
+              </span>
+              <input type="password" id="login-admin-pass" required placeholder="Password" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+            <span>Masuk Dashboard Admin</span>
+            <i class="fa-solid fa-shield-halved"></i>
+          </button>
+
+          <div class="pt-2 border-t border-slate-100">
+            <button type="button" onclick="quickDemoAdmin()" class="w-full py-2.5 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-rocket"></i>
+              <span>Masuk Cepat sebagai Admin (Tanpa Ketik Password)</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== 2. HALAMAN PORTAL SISWA ==================== -->
+    <section id="view-siswa" class="hidden space-y-6">
+      <!-- Banner Sambutan Siswa -->
+      <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span class="inline-block px-3 py-1 bg-white/15 rounded-full text-xs font-medium mb-2">Portal Pengisian Data Siswa</span>
+          <h2 class="text-xl sm:text-2xl font-bold">Halo, <span id="siswa-welcome-name">Siswa</span>!</h2>
+          <p class="text-blue-100 text-sm mt-1">Silakan lengkapi kondisi ekonomi keluarga, alamat domisili saat ini, dan unggah foto terbaru rumah Anda.</p>
+        </div>
+        <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-3 text-sm shrink-0">
+          <div class="text-blue-200 text-xs">NISN Terdaftar</div>
+          <div id="siswa-welcome-nisn" class="font-mono font-bold text-base tracking-wide">-</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Kolom Kiri (2/3): Form Input Data Siswa -->
+        <div class="lg:col-span-2">
+          <form id="form-data-siswa" onsubmit="handleSimpanDataSiswa(event)" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                  <i class="fa-solid fa-file-pen"></i>
+                </span>
+                <h3 class="font-bold text-slate-900 text-base sm:text-lg">Formulir Pendataan Kondisi Siswa</h3>
+              </div>
+              <span id="form-mode-badge" class="text-xs font-medium px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">Input Baru</span>
+            </div>
+
+            <div class="p-5 sm:p-6 space-y-6">
+              <!-- Bagian A: Data Diri Siswa -->
+              <div>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-3 flex items-center gap-2">
+                  <i class="fa-solid fa-user-check"></i> A. Data Diri Siswa
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap Siswa *</label>
+                    <input type="text" id="input-nama" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">NISN *</label>
+                    <input type="text" id="input-nisn" required readonly class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-sm text-slate-600 font-mono cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kelas / Jurusan *</label>
+                    <input type="text" id="input-kelas" required placeholder="Contoh: XI IPA 2 / X TKJ 1" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">No. HP / WhatsApp Aktif *</label>
+                    <input type="tel" id="input-hp" required placeholder="Contoh: 081234567890" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                </div>
+              </div>
+
+              <hr class="border-slate-100" />
+
+              <!-- Bagian B: Kondisi Ekonomi & Status Keluarga -->
+              <div>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-3 flex items-center gap-2">
+                  <i class="fa-solid fa-people-roof"></i> B. Kondisi Ekonomi & Status Keluarga
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Orang Tua / Wali *</label>
+                    <input type="text" id="input-ortu" required placeholder="Nama Ayah / Ibu / Wali" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pekerjaan Utama Orang Tua *</label>
+                    <input type="text" id="input-pekerjaan" required placeholder="Contoh: Buruh Harian, Petani, PNS, Wiraswasta" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Penghasilan Orang Tua / Bulan *</label>
+                    <select id="input-penghasilan" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                      <option value="">-- Pilih Rentang Penghasilan --</option>
+                      <option value="< Rp 1.000.000">&lt; Rp 1.000.000 (Sangat Kurang Mampu)</option>
+                      <option value="Rp 1.000.000 - Rp 2.500.000">Rp 1.000.000 - Rp 2.500.000 (Kurang Mampu)</option>
+                      <option value="Rp 2.500.000 - Rp 5.000.000">Rp 2.500.000 - Rp 5.000.000 (Menengah)</option>
+                      <option value="> Rp 5.000.000">&gt; Rp 5.000.000 (Mampu)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Status Keluarga *</label>
+                    <select id="input-status-keluarga" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                      <option value="">-- Pilih Status Keluarga --</option>
+                      <option value="Lengkap">Lengkap (Ayah & Ibu Ada)</option>
+                      <option value="Yatim">Yatim (Ayah Meninggal)</option>
+                      <option value="Piatu">Piatu (Ibu Meninggal)</option>
+                      <option value="Yatim Piatu">Yatim Piatu</option>
+                      <option value="Orang Tua Bercerai">Orang Tua Bercerai</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Tanggungan Anak *</label>
+                    <input type="number" id="input-tanggungan" min="1" max="15" required placeholder="Contoh: 3" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kepemilikan Kartu Bantuan *</label>
+                    <select id="input-bantuan" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                      <option value="Tidak Ada">Tidak Ada</option>
+                      <option value="KIP (Kartu Indonesia Pintar)">KIP (Kartu Indonesia Pintar)</option>
+                      <option value="PKH (Program Keluarga Harapan)">PKH (Program Keluarga Harapan)</option>
+                      <option value="KKS / Bansos Daerah">KKS / Bansos Daerah</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="border-slate-100" />
+
+              <!-- Bagian C: Alamat Saat Ini & Foto Terbaru Rumah -->
+              <div>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-3 flex items-center gap-2">
+                  <i class="fa-solid fa-location-dot"></i> C. Alamat Domisili Saat Ini & Foto Terbaru Rumah
+                </h4>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Lengkap Saat Ini (Jalan, No. Rumah, RT/RW, Desa/Kelurahan, Kecamatan, Kota) *</label>
+                    <textarea id="input-alamat" rows="3" required placeholder="Contoh: Jl. Merpati No. 14, RT 03/RW 05, Kel. Sukamaju, Kec. Lowokwaru, Kota Malang" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Status Kepemilikan Rumah *</label>
+                      <select id="input-status-rumah" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="Milik Sendiri">Milik Sendiri</option>
+                        <option value="Kontrak / Sewa">Kontrak / Sewa</option>
+                        <option value="Menumpang Keluarga">Menumpang Keluarga</option>
+                        <option value="Rumah Dinas">Rumah Dinas</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Upload Foto Terbaru Rumah (Tampak Depan) *</label>
+                      <input type="file" id="input-foto-rumah" accept="image/*" onchange="handlePreviewFoto(event)" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-300 rounded-xl bg-slate-50 p-1 cursor-pointer" />
+                      <p class="text-[11px] text-slate-400 mt-1">Format JPG/PNG/WEBP. Otomatis dikompresi agar ringan.</p>
+                    </div>
+                  </div>
+
+                  <!-- Pratinjau Foto Rumah -->
+                  <div id="preview-foto-wrapper" class="hidden bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-image text-blue-600"></i> Pratinjau Foto Rumah Terbaru:
+                      </span>
+                      <button type="button" onclick="hapusFotoTerpilih()" class="text-xs text-rose-600 hover:underline font-medium">Hapus Foto</button>
+                    </div>
+                    <img id="preview-foto-img" src="" alt="Pratinjau Rumah" class="w-full max-h-64 object-cover rounded-xl border border-slate-200 shadow-sm" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Form -->
+            <div class="px-5 sm:px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <p class="text-xs text-slate-500">Pastikan data sesuai dengan kondisi sebenarnya di lapangan.</p>
+              <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-md shadow-blue-600/20 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Simpan & Kirim Data</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Kolom Kanan (1/3): Status & Ringkasan Pengajuan Siswa -->
+        <div class="space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+            <h3 class="font-bold text-slate-900 text-base mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+              <span>Status Pengajuan Anda</span>
+            </h3>
+
+            <div id="siswa-status-card" class="space-y-4">
+              <!-- Diisi via JavaScript -->
+            </div>
+          </div>
+
+          <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+            <h4 class="font-bold text-blue-900 text-sm flex items-center gap-2 mb-2">
+              <i class="fa-solid fa-circle-info text-blue-600"></i>
+              <span>Petunjuk Pengisian</span>
+            </h4>
+            <ul class="text-xs text-blue-800 space-y-2 list-disc pl-4 leading-relaxed">
+              <li>Foto rumah diambil dari <strong>tampak depan</strong> secara jelas pada siang/sore hari.</li>
+              <li>Jika Anda pindah alamat atau ada perubahan ekonomi orang tua, Anda dapat memperbarui formulir kapan saja.</li>
+              <li>Data yang dikirim akan langsung masuk ke sistem Admin sekolah untuk diverifikasi.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 3. HALAMAN DASHBOARD ADMIN ==================== -->
+    <section id="view-admin" class="hidden space-y-6">
+      <!-- Header Admin -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Dashboard Monitoring Kondisi Siswa</h2>
+          <p class="text-sm text-slate-500 mt-0.5">Pantau kondisi ekonomi orang tua, status keluarga, alamat domisili, dan foto rumah siswa.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="resetDataDummy()" class="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-rotate"></i>
+            <span>Reset Data Contoh</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Statistik Ringkas (4 Cards) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500">Total Siswa Terdata</p>
+            <p id="stat-total" class="text-2xl font-bold text-slate-900 mt-0.5">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-hand-holding-heart"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500">Ekonomi Kurang Mampu</p>
+            <p id="stat-kurang-mampu" class="text-2xl font-bold text-rose-600 mt-0.5">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-child-reaching"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500">Yatim / Piatu / Y. Piatu</p>
+            <p id="stat-yatim" class="text-2xl font-bold text-amber-600 mt-0.5">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-house-chimney-crack"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500">Rumah Kontrak / Menumpang</p>
+            <p id="stat-kontrak" class="text-2xl font-bold text-indigo-600 mt-0.5">0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bar Filter & Pencarian Cerdas -->
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+          <!-- Pencarian Nama / NISN / Alamat -->
+          <div class="md:col-span-5 relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <input type="text" id="filter-search" oninput="renderAdminTable()" placeholder="Cari nama siswa, NISN, atau alamat rumah..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+
+          <!-- Filter Penghasilan / Ekonomi -->
+          <div class="md:col-span-4">
+            <select id="filter-ekonomi" onchange="renderAdminTable()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="ALL">Semua Kategori Penghasilan</option>
+              <option value="< Rp 1.000.000">&lt; Rp 1.000.000 (Sangat Kurang Mampu)</option>
+              <option value="Rp 1.000.000 - Rp 2.500.000">Rp 1.000.000 - Rp 2.500.000 (Kurang Mampu)</option>
+              <option value="Rp 2.500.000 - Rp 5.000.000">Rp 2.500.000 - Rp 5.000.000 (Menengah)</option>
+              <option value="> Rp 5.000.000">&gt; Rp 5.000.000 (Mampu)</option>
+            </select>
+          </div>
+
+          <!-- Filter Status Keluarga -->
+          <div class="md:col-span-3">
+            <select id="filter-keluarga" onchange="renderAdminTable()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="ALL">Semua Status Keluarga</option>
+              <option value="Lengkap">Lengkap</option>
+              <option value="Yatim">Yatim</option>
+              <option value="Piatu">Piatu</option>
+              <option value="Yatim Piatu">Yatim Piatu</option>
+              <option value="Orang Tua Bercerai">Orang Tua Bercerai</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabel Data Siswa -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <th class="py-3.5 px-4">Foto Rumah</th>
+                <th class="py-3.5 px-4">Siswa & Kelas</th>
+                <th class="py-3.5 px-4">Status Keluarga</th>
+                <th class="py-3.5 px-4">Ekonomi / Penghasilan</th>
+                <th class="py-3.5 px-4">Alamat & Status Rumah</th>
+                <th class="py-3.5 px-4">Verifikasi</th>
+                <th class="py-3.5 px-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-body" class="divide-y divide-slate-100 text-sm">
+              <!-- Diisi via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+        <!-- State Kosong -->
+        <div id="admin-empty-state" class="hidden py-12 px-4 text-center">
+          <div class="w-14 h-14 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+            <i class="fa-solid fa-folder-open"></i>
+          </div>
+          <h4 class="font-semibold text-slate-800">Tidak ada data siswa yang cocok</h4>
+          <p class="text-xs text-slate-500 mt-1">Coba ubah kata kunci pencarian atau reset filter yang dipilih.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-12 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <p>&copy; 2026 <strong>SIPEDAS</strong> — Sistem Informasi Pendataan Ekonomi & Tempat Tinggal Siswa.</p>
+      <button onclick="openDeployModal()" class="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1.5">
+        <i class="fa-solid fa-globe"></i>
+        <span>Panduan Upload Aplikasi ke Domain Gratis</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- ==================== MODAL 1: DETAIL LENGKAP SISWA (ADMIN) ==================== -->
+  <div id="modal-detail" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto animate-fadeIn">
+      <!-- Header Modal -->
+      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-id-card-clip text-blue-400 text-lg"></i>
+          <h3 class="font-bold text-base sm:text-lg">Detail Lengkap Kondisi Siswa</h3>
+        </div>
+        <button onclick="closeDetailModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Body Modal -->
+      <div id="modal-detail-content" class="p-6 max-h-[80vh] overflow-y-auto space-y-6">
+        <!-- Diisi via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: PANDUAN DEPLOYMENT DOMAIN GRATIS ==================== -->
+  <div id="modal-deploy" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto">
+      <div class="px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+          <h3 class="font-bold text-base sm:text-lg">Cara Upload Aplikasi ke Domain Gratis</h3>
+        </div>
+        <button onclick="closeDeployModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-5 max-h-[80vh] overflow-y-auto text-sm text-slate-700">
+        <p class="leading-relaxed">
+          Aplikasi ini dibangun dalam <strong>1 file mandiri (<code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-700 font-mono">index.html</code>)</strong> sehingga dapat langsung di-online-kan secara <strong>100% gratis</strong> tanpa perlu menyewa server/VPS. Pilih salah satu cara termudah berikut:
+        </p>
+
+        <!-- Opsi 1: Netlify Drop -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center">1</span>
+              Netlify Drop (Paling Cepat - Tanpa Coding/Git)
+            </h4>
+            <span class="text-[11px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">Rekomendasi</span>
+          </div>
+          <ol class="list-decimal pl-5 space-y-1 text-xs text-slate-600 leading-relaxed">
+            <li>Simpan kode aplikasi ini ke dalam sebuah folder di komputer Anda dengan nama file <strong><code>index.html</code></strong>.</li>
+            <li>Buka situs <a href="https://app.netlify.com/drop" target="_blank" class="text-blue-600 underline font-medium">app.netlify.com/drop</a> dan daftar/login gratis.</li>
+            <li>Tarik (<em>drag & drop</em>) folder berisi <code>index.html</code> tadi ke halaman Netlify.</li>
+            <li>Dalam 5 detik, Anda akan mendapatkan link domain gratis seperti <code>https://sipedas-sekolah.netlify.app</code> yang siap dibagikan ke siswa!</li>
+          </ol>
+        </div>
+
+        <!-- Opsi 2: GitHub Pages -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <h4 class="font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-slate-800 text-white text-xs flex items-center justify-center">2</span>
+            GitHub Pages (Domain <code>username.github.io</code>)
+          </h4>
+          <ol class="list-decimal pl-5 space-y-1 text-xs text-slate-600 leading-relaxed">
+            <li>Buat akun gratis di <a href="https://github.com" target="_blank" class="text-blue-600 underline font-medium">github.com</a> dan buat <em>Repository</em> baru bernama <code>sipedas</code>.</li>
+            <li>Klik <strong>Add file &rarr; Upload files</strong>, lalu unggah file <code>index.html</code>.</li>
+            <li>Masuk ke tab <strong>Settings &rarr; Pages</strong>, pada bagian <em>Branch</em> pilih <code>main</code> lalu klik <strong>Save</strong>.</li>
+            <li>Website Anda aktif secara permanen dengan domain gratis <code>https://username.github.io/sipedas</code>.</li>
+          </ol>
+        </div>
+
+        <!-- Opsi 3: Vercel -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <h4 class="font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center">3</span>
+            Vercel (Domain <code>.vercel.app</code>)
+          </h4>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Hubungkan repositori GitHub Anda ke <a href="https://vercel.com" target="_blank" class="text-blue-600 underline font-medium">vercel.com</a>, klik <strong>Deploy</strong>, dan aplikasi otomatis online dengan sertifikat SSL (HTTPS) gratis.
+          </p>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-800 flex items-start gap-2.5">
+          <i class="fa-solid fa-lightbulb text-amber-500 mt-0.5 text-sm"></i>
+          <div>
+            <strong>Catatan Database:</strong> Saat ini data tersimpan di <code>localStorage</code> browser agar langsung berjalan tanpa konfigurasi server. Jika ingin data antar HP siswa dan komputer Admin tersinkronisasi secara online lintas perangkat, Anda dapat menghubungkan file ini ke database gratis seperti <strong>Firebase Firestore</strong> atau <strong>Supabase</strong>.
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
+        <button onclick="closeDeployModal()" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition">
+          Mengerti, Tutup Panduan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    // Kunci penyimpanan localStorage
+    const STORAGE_KEY = 'sipedas_siswa_data_v1';
+    const SESSION_KEY = 'sipedas_active_session_v1';
+
+    // State sementara foto yang sedang dipilih di form siswa
+    let currentUploadedPhotoBase64 = '';
+
+    // Helper membuat ilustrasi SVG rumah realistis sebagai Base64 untuk data dummy awal
+    function generateHouseIllustration(bgColor, wallColor, roofColor, labelText) {
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="600" height="360" viewBox="0 0 600 360">
+          <rect width="600" height="260" fill="${bgColor}"/>
+          <rect y="260" width="600" height="100" fill="#64748b"/>
+          <circle cx="510" cy="65" r="28" fill="#fde047" opacity="0.85"/>
+          <!-- Badan Rumah -->
+          <rect x="140" y="150" width="320" height="130" fill="${wallColor}" stroke="#334155" stroke-width="3"/>
+          <!-- Atap -->
+          <polygon points="115,155 300,65 485,155" fill="${roofColor}" stroke="#1e293b" stroke-width="3"/>
+          <!-- Pintu -->
+          <rect x="275" y="195" width="50" height="85" fill="#78350f" stroke="#1e293b" stroke-width="2"/>
+          <circle cx="316" cy="240" r="3" fill="#fbbf24"/>
+          <!-- Jendela -->
+          <rect x="180" y="185" width="55" height="45" fill="#bae6fd" stroke="#1e293b" stroke-width="2"/>
+          <line x1="207" y1="185" x2="207" y2="230" stroke="#1e293b" stroke-width="2"/>
+          <rect x="365" y="185" width="55" height="45" fill="#bae6fd" stroke="#1e293b" stroke-width="2"/>
+          <line x1="392" y1="185" x2="392" y2="230" stroke="#1e293b" stroke-width="2"/>
+          <!-- Label Kondisi -->
+          <rect x="16" y="16" width="260" height="32" rx="8" fill="rgba(15,23,42,0.75)"/>
+          <text x="28" y="37" fill="#ffffff" font-family="sans-serif" font-size="13" font-weight="bold">${labelText}</text>
+        </svg>
+      `;
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.trim());
+    }
+
+    // Data Dummy Awal agar dashboard Admin langsung hidup & siap diuji
+    const DEFAULT_DUMMY_DATA = [
+      {
+        id: 'STU-001',
+        nisn: '0081122334',
+        nama: 'Ahmad Fauzi',
+        kelas: 'XI IPA 1',
+        hp: '081234567801',
+        namaOrtu: 'Bapak Supriyadi',
+        pekerjaanOrtu: 'Buruh Bangunan Harian',
+        penghasilan: '< Rp 1.000.000',
+        statusKeluarga: 'Yatim',
+        tanggungan: 3,
+        bantuan: 'KIP (Kartu Indonesia Pintar)',
+        alamat: 'Jl. Candi Panggung Gg. 3 No. 12, RT 04/RW 02, Kel. Mojolangu, Kec. Lowokwaru, Kota Malang',
+        statusRumah: 'Kontrak / Sewa',
+        fotoRumah: generateHouseIllustration('#dbeafe', '#e2e8f0', '#991b1b', 'Foto Rumah: Ahmad Fauzi (Kontrak)'),
+        verifikasi: 'Terverifikasi',
+        updatedAt: '10 Nov 2026, 09:15'
+      },
+      {
+        id: 'STU-002',
+        nisn: '0085566778',
+        nama: 'Siti Nurhaliza',
+        kelas: 'X IPS 2',
+        hp: '085712349988',
+        namaOrtu: 'Ibu Aminah',
+        pekerjaanOrtu: 'Penjual Gorengan Keliling',
+        penghasilan: 'Rp 1.000.000 - Rp 2.500.000',
+        statusKeluarga: 'Yatim Piatu',
+        tanggungan: 2,
+        bantuan: 'PKH (Program Keluarga Harapan)',
+        alamat: 'Dusun Krajan RT 02/RW 01, Desa Sumbersekar, Kec. Dau, Kab. Malang',
+        statusRumah: 'Menumpang Keluarga',
+        fotoRumah: generateHouseIllustration('#e0f2fe', '#fef3c7', '#7c2d12', 'Foto Rumah: Siti Nurhaliza (Menumpang)'),
+        verifikasi: 'Perlu Survei',
+        updatedAt: '11 Nov 2026, 14:20'
+      },
+      {
+        id: 'STU-003',
+        nisn: '0079988776',
+        nama: 'Rizky Pratama Putra',
+        kelas: 'XII TKJ 1',
+        hp: '082144556677',
+        namaOrtu: 'Bapak Hendra Wijaya',
+        pekerjaanOrtu: 'Pegawai Negeri Sipil (PNS)',
+        penghasilan: '> Rp 5.000.000',
+        statusKeluarga: 'Lengkap',
+        tanggungan: 2,
+        bantuan: 'Tidak Ada',
+        alamat: 'Perumahan Permata Jingga Blok C-18, Kel. Tunggulwulung, Kec. Lowokwaru, Kota Malang',
+        statusRumah: 'Milik Sendiri',
+        fotoRumah: generateHouseIllustration('#bae6fd', '#ffffff', '#1e3a8a', 'Foto Rumah: Rizky Pratama (Milik Sendiri)'),
+        verifikasi: 'Terverifikasi',
+        updatedAt: '11 Nov 2026, 16:45'
+      },
+      {
+        id: 'STU-004',
+        nisn: '0083344556',
+        nama: 'Dewi Anggraini',
+        kelas: 'XI IPS 3',
+        hp: '089677889900',
+        namaOrtu: 'Bapak Slamet Riyadi',
+        pekerjaanOrtu: 'Petani Penggarap',
+        penghasilan: 'Rp 1.000.000 - Rp 2.500.000',
+        statusKeluarga: 'Piatu',
+        tanggungan: 4,
+        bantuan: 'KIP (Kartu Indonesia Pintar)',
+        alamat: 'Jl. Raya Tlogomas Gg. 8 No. 5, RT 01/RW 04, Kel. Tlogomas, Kec. Lowokwaru, Kota Malang',
+        statusRumah: 'Milik Sendiri',
+        fotoRumah: generateHouseIllustration('#e0e7ff', '#f1f5f9', '#b45309', 'Foto Rumah: Dewi Anggraini'),
+        verifikasi: 'Terverifikasi',
+        updatedAt: '12 Nov 2026, 08:10'
+      }
+    ];
+
+    // Ambil semua data siswa dari localStorage
+    function getSiswaList() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_DUMMY_DATA));
+        return [...DEFAULT_DUMMY_DATA];
+      }
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        return [...DEFAULT_DUMMY_DATA];
+      }
+    }
+
+    // Simpan array siswa ke localStorage
+    function saveSiswaList(list) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    // Notifikasi Toast (pengganti alert)
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-600 text-white border-emerald-700',
+        error: 'bg-rose-600 text-white border-rose-700',
+        info: 'bg-slate-900 text-white border-slate-700'
+      };
+      const icons = {
+        success: 'fa-circle-check',
+        error: 'fa-circle-exclamation',
+        info: 'fa-circle-info'
+      };
+      toast.className = `${colors[type] || colors.info} pointer-events-auto px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-sm font-medium flex items-center gap-2.5 transition-all duration-300 transform translate-y-0 opacity-100`;
+      toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} text-base"></i><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    // ==================== NAVIGASI & AUTENTIKASI ====================
+    function switchLoginTab(role) {
+      const btnSiswa = document.getElementById('tab-btn-siswa');
+      const btnAdmin = document.getElementById('tab-btn-admin');
+      const formSiswa = document.getElementById('form-login-siswa');
+      const formAdmin = document.getElementById('form-login-admin');
+
+      if (role === 'siswa') {
+        btnSiswa.className = 'py-2.5 text-sm font-semibold rounded-lg bg-white text-blue-700 shadow-sm transition flex items-center justify-center gap-2';
+        btnAdmin.className = 'py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-2';
+        formSiswa.classList.remove('hidden');
+        formAdmin.classList.add('hidden');
+      } else {
+        btnAdmin.className = 'py-2.5 text-sm font-semibold rounded-lg bg-white text-slate-900 shadow-sm transition flex items-center justify-center gap-2';
+        btnSiswa.className = 'py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-2';
+        formAdmin.classList.remove('hidden');
+        formSiswa.classList.add('hidden');
+      }
+    }
+
+    function handleLoginSiswa(e) {
+      e.preventDefault();
+      const nisn = document.getElementById('login-nisn').value.trim();
+      const nama = document.getElementById('login-nama-siswa').value.trim();
+      if (!nisn || !nama) return;
+
+      const session = { role: 'siswa', nisn, nama };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      renderApp();
+      showToast(`Selamat datang, ${nama}!`, 'success');
+    }
+
+    function quickDemoSiswa() {
+      const session = { role: 'siswa', nisn: '0081122334', nama: 'Ahmad Fauzi' };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      renderApp();
+      showToast('Masuk sebagai Siswa Demo: Ahmad Fauzi', 'info');
+    }
+
+    function handleLoginAdmin(e) {
+      e.preventDefault();
+      const user = document.getElementById('login-admin-user').value.trim();
+      const pass = document.getElementById('login-admin-pass').value.trim();
+
+      if (user === 'admin' && pass === '123') {
+        const session = { role: 'admin', nama: 'Administrator Sekolah' };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        renderApp();
+        showToast('Berhasil masuk ke Dashboard Admin!', 'success');
+      } else {
+        showToast('Username atau password salah! (Gunakan: admin / 123)', 'error');
+      }
+    }
+
+    function quickDemoAdmin() {
+      const session = { role: 'admin', nama: 'Administrator Sekolah' };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      renderApp();
+      showToast('Masuk cepat sebagai Admin berhasil!', 'success');
+    }
+
+    function logout() {
+      localStorage.removeItem(SESSION_KEY);
+      renderApp();
+      showToast('Anda telah keluar dari sesi.', 'info');
+    }
+
+    // ==================== RENDER HALAMAN BERDASARKAN SESI ====================
+    function renderApp() {
+      const rawSession = localStorage.getItem(SESSION_KEY);
+      const viewLogin = document.getElementById('view-login');
+      const viewSiswa = document.getElementById('view-siswa');
+      const viewAdmin = document.getElementById('view-admin');
+      const navUserInfo = document.getElementById('nav-user-info');
+      const navUserBadge = document.getElementById('nav-user-badge');
+
+      viewLogin.classList.add('hidden');
+      viewSiswa.classList.add('hidden');
+      viewAdmin.classList.add('hidden');
+
+      if (!rawSession) {
+        viewLogin.classList.remove('hidden');
+        navUserInfo.classList.add('hidden');
+        navUserInfo.classList.remove('flex');
+        return;
+      }
+
+      const session = JSON.parse(rawSession);
+      navUserInfo.classList.remove('hidden');
+      navUserInfo.classList.add('flex');
+
+      if (session.role === 'siswa') {
+        navUserBadge.textContent = `Siswa: ${session.nama}`;
+        viewSiswa.classList.remove('hidden');
+        initPortalSiswa(session);
+      } else if (session.role === 'admin') {
+        navUserBadge.textContent = `Admin Sekolah`;
+        viewAdmin.classList.remove('hidden');
+        initDashboardAdmin();
+      }
+    }
+
+    // ==================== LOGIKA PORTAL SISWA ====================
+    function initPortalSiswa(session) {
+      document.getElementById('siswa-welcome-name').textContent = session.nama;
+      document.getElementById('siswa-welcome-nisn').textContent = session.nisn;
+
+      const list = getSiswaList();
+      const existing = list.find(item => item.nisn === session.nisn);
+
+      // Reset form terlebih dahulu
+      document.getElementById('form-data-siswa').reset();
+      document.getElementById('input-nisn').value = session.nisn;
+      document.getElementById('input-nama').value = existing ? existing.nama : session.nama;
+
+      if (existing) {
+        document.getElementById('form-mode-badge').textContent = 'Mode Perbarui Data';
+        document.getElementById('form-mode-badge').className = 'text-xs font-medium px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200';
+
+        document.getElementById('input-kelas').value = existing.kelas || '';
+        document.getElementById('input-hp').value = existing.hp || '';
+        document.getElementById('input-ortu').value = existing.namaOrtu || '';
+        document.getElementById('input-pekerjaan').value = existing.pekerjaanOrtu || '';
+        document.getElementById('input-penghasilan').value = existing.penghasilan || '';
+        document.getElementById('input-status-keluarga').value = existing.statusKeluarga || '';
+        document.getElementById('input-tanggungan').value = existing.tanggungan || 1;
+        document.getElementById('input-bantuan').value = existing.bantuan || 'Tidak Ada';
+        document.getElementById('input-alamat').value = existing.alamat || '';
+        document.getElementById('input-status-rumah').value = existing.statusRumah || 'Milik Sendiri';
+
+        if (existing.fotoRumah) {
+          currentUploadedPhotoBase64 = existing.fotoRumah;
+          document.getElementById('preview-foto-img').src = existing.fotoRumah;
+          document.getElementById('preview-foto-wrapper').classList.remove('hidden');
+        }
+      } else {
+        document.getElementById('form-mode-badge').textContent = 'Pengisian Baru';
+        document.getElementById('form-mode-badge').className = 'text-xs font-medium px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200';
+        currentUploadedPhotoBase64 = '';
+        document.getElementById('preview-foto-wrapper').classList.add('hidden');
+      }
+
+      renderSiswaStatusCard(existing);
+    }
+
+    // Kompresi otomatis gambar rumah sebelum dikonversi ke Base64 agar localStorage aman
+    function handlePreviewFoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('Harap pilih file gambar (JPG/PNG/WEBP).', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Kompres kualitas JPEG 0.72
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.72);
+          currentUploadedPhotoBase64 = compressedBase64;
+
+          document.getElementById('preview-foto-img').src = compressedBase64;
+          document.getElementById('preview-foto-wrapper').classList.remove('hidden');
+          showToast('Foto rumah berhasil dimuat dan siap dikirim!', 'info');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function hapusFotoTerpilih() {
+      currentUploadedPhotoBase64 = '';
+      document.getElementById('input-foto-rumah').value = '';
+      document.getElementById('preview-foto-img').src = '';
+      document.getElementById('preview-foto-wrapper').classList.add('hidden');
+    }
+
+    function handleSimpanDataSiswa(e) {
+      e.preventDefault();
+
+      if (!currentUploadedPhotoBase64) {
+        showToast('Mohon unggah foto terbaru rumah Anda terlebih dahulu!', 'error');
+        return;
+      }
+
+      const nisn = document.getElementById('input-nisn').value.trim();
+      const nama = document.getElementById('input-nama').value.trim();
+      const now = new Date();
+      const formattedDate = now.toLocaleDateString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+
+      const list = getSiswaList();
+      const existingIndex = list.findIndex(item => item.nisn === nisn);
+
+      const newData = {
+        id: existingIndex >= 0 ? list[existingIndex].id : 'STU-' + Date.now().toString().slice(-4),
+        nisn,
+        nama,
+        kelas: document.getElementById('input-kelas').value.trim(),
+        hp: document.getElementById('input-hp').value.trim(),
+        namaOrtu: document.getElementById('input-ortu').value.trim(),
+        pekerjaanOrtu: document.getElementById('input-pekerjaan').value.trim(),
+        penghasilan: document.getElementById('input-penghasilan').value,
+        statusKeluarga: document.getElementById('input-status-keluarga').value,
+        tanggungan: parseInt(document.getElementById('input-tanggungan').value, 10) || 1,
+        bantuan: document.getElementById('input-bantuan').value,
+        alamat: document.getElementById('input-alamat').value.trim(),
+        statusRumah: document.getElementById('input-status-rumah').value,
+        fotoRumah: currentUploadedPhotoBase64,
+        verifikasi: existingIndex >= 0 ? list[existingIndex].verifikasi : 'Menunggu Verifikasi',
+        updatedAt: formattedDate
+      };
+
+      if (existingIndex >= 0) {
+        list[existingIndex] = newData;
+      } else {
+        list.unshift(newData);
+      }
+
+      saveSiswaList(list);
+      renderSiswaStatusCard(newData);
+      document.getElementById('form-mode-badge').textContent = 'Data Tersimpan';
+      document.getElementById('form-mode-badge').className = 'text-xs font-medium px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200';
+      showToast('Data kondisi ekonomi & foto rumah berhasil disimpan!', 'success');
+    }
+
+    function renderSiswaStatusCard(data) {
+      const container = document.getElementById('siswa-status-card');
+      if (!data) {
+        container.innerHTML = `
+          <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs leading-relaxed">
+            <div class="font-bold flex items-center gap-1.5 mb-1">
+              <i class="fa-solid fa-triangle-exclamation"></i> Belum Ada Data Terkirim
+            </div>
+            Anda belum mengirimkan data kondisi ekonomi dan foto rumah. Silakan isi formulir di samping.
+          </div>
+        `;
+        return;
+      }
+
+      let badgeVerif = 'bg-amber-100 text-amber-800';
+      if (data.verifikasi === 'Terverifikasi') badgeVerif = 'bg-emerald-100 text-emerald-800';
+      if (data.verifikasi === 'Perlu Survei') badgeVerif = 'bg-rose-100 text-rose-800';
+
+      container.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-slate-500">Status Verifikasi:</span>
+          <span class="text-xs font-bold px-2.5 py-1 rounded-lg ${badgeVerif}">${data.verifikasi}</span>
+        </div>
+        <div class="rounded-xl overflow-hidden border border-slate-200">
+          <img src="${data.fotoRumah}" alt="Rumah ${data.nama}" class="w-full h-40 object-cover" />
+        </div>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between py-1 border-b border-slate-100">
+            <span class="text-slate-500">Status Keluarga:</span>
+            <span class="font-semibold text-slate-800">${data.statusKeluarga}</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-slate-100">
+            <span class="text-slate-500">Penghasilan Ortu:</span>
+            <span class="font-semibold text-slate-800">${data.penghasilan}</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-slate-100">
+            <span class="text-slate-500">Status Rumah:</span>
+            <span class="font-semibold text-slate-800">${data.statusRumah}</span>
+          </div>
+          <div class="pt-1">
+            <span class="text-slate-500 block mb-0.5">Alamat Domisili:</span>
+            <p class="font-medium text-slate-800 bg-slate-50 p-2 rounded-lg border border-slate-100">${data.alamat}</p>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-400 text-right">Terakhir diperbarui: ${data.updatedAt}</p>
+      `;
+    }
+
+    // ==================== LOGIKA DASHBOARD ADMIN ====================
+    function initDashboardAdmin() {
+      updateAdminStats();
+      renderAdminTable();
+    }
+
+    function updateAdminStats() {
+      const list = getSiswaList();
+      const total = list.length;
+      const kurangMampu = list.filter(s =>
+        s.penghasilan === '< Rp 1.000.000' || s.penghasilan === 'Rp 1.000.000 - Rp 2.500.000'
+      ).length;
+      const yatim = list.filter(s =>
+        ['Yatim', 'Piatu', 'Yatim Piatu'].includes(s.statusKeluarga)
+      ).length;
+      const kontrak = list.filter(s =>
+        ['Kontrak / Sewa', 'Menumpang Keluarga'].includes(s.statusRumah)
+      ).length;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-kurang-mampu').textContent = kurangMampu;
+      document.getElementById('stat-yatim').textContent = yatim;
+      document.getElementById('stat-kontrak').textContent = kontrak;
+    }
+
+    function getEkonomiBadge(penghasilan) {
+      if (penghasilan === '< Rp 1.000.000') {
+        return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">&lt; Rp 1 Jt (Prioritas)</span>`;
+      }
+      if (penghasilan === 'Rp 1.000.000 - Rp 2.500.000') {
+        return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Rp 1 - 2,5 Jt</span>`;
+      }
+      if (penghasilan === 'Rp 2.500.000 - Rp 5.000.000') {
+        return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">Rp 2,5 - 5 Jt</span>`;
+      }
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">&gt; Rp 5 Jt (Mampu)</span>`;
+    }
+
+    function getKeluargaBadge(status) {
+      if (['Yatim', 'Piatu', 'Yatim Piatu'].includes(status)) {
+        return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-800">${status}</span>`;
+      }
+      if (status === 'Orang Tua Bercerai') {
+        return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-orange-100 text-orange-800">${status}</span>`;
+      }
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700">${status}</span>`;
+    }
+
+    function renderAdminTable() {
+      const list = getSiswaList();
+      const keyword = document.getElementById('filter-search').value.toLowerCase().trim();
+      const filterEkonomi = document.getElementById('filter-ekonomi').value;
+      const filterKeluarga = document.getElementById('filter-keluarga').value;
+
+      const filtered = list.filter(item => {
+        const matchKeyword =
+          item.nama.toLowerCase().includes(keyword) ||
+          item.nisn.toLowerCase().includes(keyword) ||
+          item.alamat.toLowerCase().includes(keyword) ||
+          item.kelas.toLowerCase().includes(keyword);
+
+        const matchEkonomi = filterEkonomi === 'ALL' || item.penghasilan === filterEkonomi;
+        const matchKeluarga = filterKeluarga === 'ALL' || item.statusKeluarga === filterKeluarga;
+
+        return matchKeyword && matchEkonomi && matchKeluarga;
+      });
+
+      const tbody = document.getElementById('admin-table-body');
+      const emptyState = document.getElementById('admin-empty-state');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      tbody.innerHTML = filtered.map(siswa => {
+        let verifBadge = 'bg-amber-50 text-amber-700 border-amber-200';
+        if (siswa.verifikasi === 'Terverifikasi') verifBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        if (siswa.verifikasi === 'Perlu Survei') verifBadge = 'bg-rose-50 text-rose-700 border-rose-200';
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3.5 px-4">
+              <div onclick="openDetailModal('${siswa.nisn}')" class="w-20 h-14 rounded-xl overflow-hidden border border-slate-200 cursor-pointer group relative shadow-sm">
+                <img src="${siswa.fotoRumah}" alt="Rumah ${siswa.nama}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition flex items-center justify-center">
+                  <i class="fa-solid fa-magnifying-glass-plus text-white opacity-0 group-hover:opacity-100 text-xs"></i>
+                </div>
+              </div>
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-bold text-slate-900">${siswa.nama}</div>
+              <div class="text-xs text-slate-500 font-mono">NISN: ${siswa.nisn} &bull; <span class="font-sans font-medium text-blue-700">${siswa.kelas}</span></div>
+            </td>
+            <td class="py-3.5 px-4">
+              ${getKeluargaBadge(siswa.statusKeluarga)}
+              <div class="text-[11px] text-slate-500 mt-1">Ortu: ${siswa.namaOrtu}</div>
+            </td>
+            <td class="py-3.5 px-4">
+              ${getEkonomiBadge(siswa.penghasilan)}
+              <div class="text-[11px] text-slate-500 mt-1">${siswa.pekerjaanOrtu}</div>
+            </td>
+            <td class="py-3.5 px-4 max-w-xs">
+              <div class="text-xs font-semibold text-slate-700 mb-0.5">${siswa.statusRumah}</div>
+              <p class="text-xs text-slate-500 line-clamp-2" title="${siswa.alamat}">${siswa.alamat}</p>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-semibold border ${verifBadge}">
+                ${siswa.verifikasi}
+              </span>
+            </td>
+            <td class="py-3.5 px-4 text-right">
+              <button onclick="openDetailModal('${siswa.nisn}')" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-sm transition inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-eye"></i>
+                <span>Lihat Detail</span>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ==================== MODAL DETAIL SISWA (ADMIN) ====================
+    function openDetailModal(nisn) {
+      const list = getSiswaList();
+      const siswa = list.find(s => s.nisn === nisn);
+      if (!siswa) return;
+
+      const modal = document.getElementById('modal-detail');
+      const content = document.getElementById('modal-detail-content');
+
+      content.innerHTML = `
+        <!-- Foto Rumah Ukuran Besar -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Foto Kondisi Rumah Terbaru</span>
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700">Status Rumah: ${siswa.statusRumah}</span>
+          </div>
+          <div class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-inner">
+            <img src="${siswa.fotoRumah}" alt="Foto Rumah ${siswa.nama}" class="w-full max-h-80 object-cover" />
+          </div>
+        </div>
+
+        <!-- Grid Informasi Lengkap -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 border-b border-slate-200 pb-1.5">Identitas Siswa</h4>
+            <div class="text-xs space-y-1.5">
+              <div class="flex justify-between"><span class="text-slate-500">Nama Lengkap:</span><span class="font-bold text-slate-900">${siswa.nama}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">NISN:</span><span class="font-mono font-semibold text-slate-800">${siswa.nisn}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Kelas:</span><span class="font-semibold text-slate-800">${siswa.kelas}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">No. WhatsApp:</span><span class="font-semibold text-emerald-700">${siswa.hp}</span></div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 border-b border-slate-200 pb-1.5">Ekonomi & Keluarga</h4>
+            <div class="text-xs space-y-1.5">
+              <div class="flex justify-between"><span class="text-slate-500">Orang Tua/Wali:</span><span class="font-bold text-slate-900">${siswa.namaOrtu}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Pekerjaan:</span><span class="font-semibold text-slate-800">${siswa.pekerjaanOrtu}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Penghasilan:</span><span class="font-bold text-rose-700">${siswa.penghasilan}</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Status Keluarga:</span><span class="font-semibold text-slate-800">${siswa.statusKeluarga} (${siswa.tanggungan} Anak)</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Bantuan Sosial:</span><span class="font-semibold text-blue-700">${siswa.bantuan}</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alamat Lengkap -->
+        <div class="p-4 rounded-xl bg-blue-50/70 border border-blue-200">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-blue-800 mb-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-location-dot"></i> Alamat Tempat Tinggal Saat Ini
+          </h4>
+          <p class="text-sm font-medium text-slate-800 leading-relaxed">${siswa.alamat}</p>
+        </div>
+
+        <!-- Panel Aksi Verifikasi Admin -->
+        <div class="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button onclick="ubahStatusVerifikasi('${siswa.nisn}', 'Terverifikasi')" class="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-check"></i> Tandai Terverifikasi
+            </button>
+            <button onclick="ubahStatusVerifikasi('${siswa.nisn}', 'Perlu Survei')" class="flex-1 sm:flex-none px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-house-circle-exclamation"></i> Tandai Perlu Survei
+            </button>
+          </div>
+          <button onclick="hapusDataSiswa('${siswa.nisn}')" class="w-full sm:w-auto px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-trash"></i> Hapus Data
+          </button>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDetailModal() {
+      const modal = document.getElementById('modal-detail');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function ubahStatusVerifikasi(nisn, statusBaru) {
+      const list = getSiswaList();
+      const idx = list.findIndex(s => s.nisn === nisn);
+      if (idx >= 0) {
+        list[idx].verifikasi = statusBaru;
+        saveSiswaList(list);
+        updateAdminStats();
+        renderAdminTable();
+        closeDetailModal();
+        showToast(`Status verifikasi diubah menjadi "${statusBaru}"`, 'success');
+      }
+    }
+
+    function hapusDataSiswa(nisn) {
+      const list = getSiswaList().filter(s => s.nisn !== nisn);
+      saveSiswaList(list);
+      updateAdminStats();
+      renderAdminTable();
+      closeDetailModal();
+      showToast('Data siswa berhasil dihapus dari sistem.', 'info');
+    }
+
+    function resetDataDummy() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_DUMMY_DATA));
+      updateAdminStats();
+      renderAdminTable();
+      showToast('Data contoh berhasil dipulihkan!', 'success');
+    }
+
+    // ==================== MODAL PANDUAN DEPLOY GRATIS ====================
+    function openDeployModal() {
+      const modal = document.getElementById('modal-deploy');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDeployModal() {
+      const modal = document.getElementById('modal-deploy');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // Tutup modal saat klik area gelap di luar modal
+    window.addEventListener('click', function(e) {
+      const modalDetail = document.getElementById('modal-detail');
+      const modalDeploy = document.getElementById('modal-deploy');
+      if (e.target === modalDetail) closeDetailModal();
+      if (e.target === modalDeploy) closeDeployModal();
+    });
+
+    // Inisialisasi aplikasi saat halaman selesai dimuat
+    window.onload = function() {
+      getSiswaList(); // Pastikan dummy data terisi jika kosong
+      renderApp();
+    };
+  </script>
+</body>
+</html>
